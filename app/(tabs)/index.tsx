@@ -1,98 +1,115 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, TouchableOpacity, Text, FlatList, StyleSheet, SafeAreaView } from 'react-native';
+// Import the TaskItem we created! (Adjust the path if necessary based on where your index file is)
+import TaskItem from '../../components/ui/task-item'; 
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// Define what a "Task" looks like
+interface Task {
+  id: string;
+  text: string;
+  isCompleted: boolean;
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  // 1. State for the text being typed
+  const [taskText, setTaskText] = useState('');
+  // 2. State for our actual list of tasks
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Function to add a new task
+  const addTask = () => {
+    if (taskText.trim() === '') return; // Prevent adding empty tasks
+    
+    const newTask: Task = {
+      id: Date.now().toString(), // Generate a simple unique ID
+      text: taskText,
+      isCompleted: false,
+    };
+    
+    setTasks([...tasks, newTask]); // Add to the list
+    setTaskText(''); // Clear the input field
+  };
+
+  // Function to toggle a task's complete status
+  const toggleTask = (id: string) => {
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
+    ));
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.headerTitle}>DOITAPP</Text>
+
+      {/* Input Area */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="What needs to be done?"
+          placeholderTextColor="#888"
+          value={taskText}
+          onChangeText={setTaskText}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={addTask}>
+          <Text style={styles.addButtonText}>Add</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Task List */}
+      <FlatList
+        data={tasks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TaskItem 
+            title={item.text} 
+            isCompleted={item.isCompleted} 
+            onToggle={() => toggleTask(item.id)} 
+          />
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#121212', // Dark background
+    paddingHorizontal: 20,
+    paddingTop: 50,
+  },
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  inputContainer: {
     flexDirection: 'row',
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#1E1E1E',
+    color: '#FFF',
+    padding: 15,
+    borderRadius: 10,
+    fontSize: 16,
+    marginRight: 10,
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
+    borderRadius: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  addButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
